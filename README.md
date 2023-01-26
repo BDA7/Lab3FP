@@ -7,13 +7,15 @@
 
 ### Реализация
 Функция читает из стандартного потока пока не будет пустая строка.
-В результате получаем список пар (x,y)
+В результате получаем список пар (x,y), если в листе уже 10 элементов,
+то обновляем его убирая самый старый, потом применяем async функцию для
+вычисления
 ```f#
-let handleInputForOne (points: (float * float) list) =
+let handleInputForOne (isTwo: bool) chsFunc1 chsFunc2 size =
     let rec handler pList =
         let line = Console.ReadLine()
 
-        if (isNull line && line <> "") then
+        if (not (isNull line) && line <> "") then
             let data = line.Split(";")
 
             if data.Length >= 2 then
@@ -24,14 +26,22 @@ let handleInputForOne (points: (float * float) list) =
                     match pList with
                     | [] -> [ (x, y) ]
                     | _ -> (x, y) :: pList
-
-                handler newPlist
+                    
+                if newPlist.Length < 10 then
+                    handler newPlist
+                else
+                    let updatedList = updateList newPlist
+                    let newA, _ = updatedList[0]
+                    let newB, _ = updatedList[1]
+                    usesFunctions updatedList isTwo chsFunc1 chsFunc2 newA newB size
+                    handler updatedList
+                    
             else
                 handler pList
         else
-            pList
+            ()
 
-    handler points
+    handler []
 ```
 Полученный список точек обрабатывается, вычисляется функция. Ожидается ввод новой пары чисел и алгоритм повторяется.\
 В зависимости от аргументов командной строки, выбирается аппроксимирующая функция
@@ -46,6 +56,21 @@ let chooseF value (inp: list<float * float>) : double -> double =
 
     fu
 ```
+Функция для вычислений: флагом выбирается количество функций, если их две,
+тогда функция 1 выполяется, а функция 2 ожидает ее выполения, чтобы не было каши с выводом
+```f#
+let usesFunctions newSeq isTwo chsFunc1 chsFunc2 a b size =
+    match isTwo with
+    | false ->
+        let fc1 = (fn1 newSeq chsFunc1 a b size)
+        fc1 |> Async.RunSynchronously
+    | true ->
+        let fc1 = (fn1 newSeq chsFunc1 a b size) 
+        let fc2 = (fn2 newSeq chsFunc2 a b size)
+        fc1 |> Async.RunSynchronously
+        fc2 |> Async.RunSynchronously
+```
+
 Аппроксимация линейной функции.
 ```f#
 let linear (points: list<float * float>) : double -> double =
@@ -109,15 +134,12 @@ let generator (a: double) (b: double) (n: int) =
 ```
 Выводим результат функции на сгенерировнной последовательности
 ```f#
-let rec useFuncGenerator (a: double) (b: double) (n: int) (fu: double -> double) =
-    if (n <= 0) then
-        ()
-    else
-        let generateNum = generator a b n
-        let num: double = generateNum (n - 1)
-        let f = fu num
-        printfn "x: %f y: %f" num f
-        useFuncGenerator a b (n - 1) fu
+let fn1 (newSeq: (float * float) list) chsFunc a b size = async {
+    printUseFunc chsFunc
+    let use1 = chooseF chsFunc newSeq
+    useFuncGenerator a b size use1
+    printfn "--------------------------------------"
+}
 ```
 
 ### Выводы
