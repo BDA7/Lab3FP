@@ -32,7 +32,7 @@ jobs:
       run: |
         dotnet fsharplint lint Functions.fs
         dotnet fsharplint lint Program.fs
-        dotnet fsharplint lint UnitTest1.fs
+        dotnet fsharplint lint Tests.fs
     - name: Format 
       run: |
         fantomas Functions.fs
