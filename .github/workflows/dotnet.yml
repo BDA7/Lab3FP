@@ -37,6 +37,6 @@ jobs:
       run: |
         fantomas Functions.fs
         fantomas Program.fs
-        fantomas UnitTest1.fs
+        fantomas Tests.fs
     - name: Test
       run: dotnet test --no-build --logger:"console;verbosity=detailed"
