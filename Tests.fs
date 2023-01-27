@@ -14,21 +14,21 @@ type LabTests(output: ITestOutputHelper) =
 
     [<Fact>]
     let ``Test Linear`` () =
-        let f = chooseF "1" points
+        let f = linear points
         assert (2. = f 1)
         assert (5.5 = f 4.5)
         assert (6.7 = f 5.7)
 
     [<Fact>]
     let ``Test logarithm`` () =
-        let f = chooseF "2" points
+        let f = logarithm points
         assert (0.4406432356126949 = f 1.02)
         assert (4.503721892587115 = f 2.5)
         assert (7.364782591706943 = f 4.7)
 
     [<Fact>]
     let ``Test segment`` () =
-        let f = chooseF "3" points
+        let f = approx points
         assert (10.0 = f 7.8)
         assert (4.0 = f 1.023)
         assert (6.0 = f 4.6)
@@ -39,5 +39,5 @@ type LabTests(output: ITestOutputHelper) =
         Console.SetIn(File.OpenText(__SOURCE_DIRECTORY__ + path))
         let writer = new StringWriter()
         Console.SetOut writer
-        handleInputForOne false "1" "" 20 
+        handleInputForOne "1" "" 20 
         output.WriteLine(writer.ToString())

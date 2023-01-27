@@ -65,7 +65,7 @@ let approx (points: list<float * float>) : double -> double =
 
     f
 
-let chooseF value (inp: list<float * float>) : double -> double =
+let chooseF value (inp: list<float * float>) = async {
     let fu =
         match value with
         | "1" -> linear inp
@@ -73,8 +73,8 @@ let chooseF value (inp: list<float * float>) : double -> double =
         | "3" -> approx inp
         | _ -> linear inp
 
-    fu
-    
+    return fu
+}
 
 let updateList (oldList: (float * float) list) =
     if (oldList.Length > 9) then

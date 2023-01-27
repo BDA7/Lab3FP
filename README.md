@@ -8,10 +8,10 @@
 ### Реализация
 Функция читает из стандартного потока пока не будет пустая строка.
 В результате получаем список пар (x,y), если в листе уже 10 элементов,
-то обновляем его убирая самый старый, потом применяем async функцию для
+то обновляем его убирая самый старый, потом применяем функцию для
 вычисления
 ```f#
-let handleInputForOne (isTwo: bool) chsFunc1 chsFunc2 size =
+let handleInputForOne (chsFunc1: string) (chsFunc2: string) size =
     let rec handler pList =
         let line = Console.ReadLine()
 
@@ -33,7 +33,7 @@ let handleInputForOne (isTwo: bool) chsFunc1 chsFunc2 size =
                     let updatedList = updateList newPlist
                     let newA, _ = updatedList[0]
                     let newB, _ = updatedList[1]
-                    usesFunctions updatedList isTwo chsFunc1 chsFunc2 newA newB size
+                    usesFunctions updatedList chsFunc1 chsFunc2 newA newB size
                     handler updatedList
                     
             else
@@ -43,10 +43,29 @@ let handleInputForOne (isTwo: bool) chsFunc1 chsFunc2 size =
 
     handler []
 ```
+Функция для выбора количества аппроксимаций, если их две, то вычисления выполняются параллельно
+```f#
+let usesFunctions newSeq (chsFunc1: string) (chsFunc2: string) a b size =
+    if (chsFunc2 = "") then
+        let fc = chooseF chsFunc1 newSeq
+        let res = fc |> Async.RunSynchronously
+        useFuncGenerator a b size res
+        printfn "--------------------------"
+    else
+        let fcs = seq {chsFunc1; chsFunc2}
+        let mySeq =
+            fcs |> Seq.map (fun el -> (chooseF el newSeq))
+            |> Async.Parallel
+            |> Async.RunSynchronously
+        mySeq |> Seq.iter(fun el ->
+            useFuncGenerator a b size el
+            printfn "--------------------------"
+            )
+```
 Полученный список точек обрабатывается, вычисляется функция. Ожидается ввод новой пары чисел и алгоритм повторяется.\
 В зависимости от аргументов командной строки, выбирается аппроксимирующая функция
 ```f#
-let chooseF value (inp: list<float * float>) : double -> double =
+let chooseF value (inp: list<float * float>) = async {
     let fu =
         match value with
         | "1" -> linear inp
@@ -54,21 +73,9 @@ let chooseF value (inp: list<float * float>) : double -> double =
         | "3" -> approx inp
         | _ -> linear inp
 
-    fu
-```
-Функция для вычислений: флагом выбирается количество функций, если их две,
-тогда функция 1 выполяется, а функция 2 ожидает ее выполения, чтобы не было каши с выводом
-```f#
-let usesFunctions newSeq isTwo chsFunc1 chsFunc2 a b size =
-    match isTwo with
-    | false ->
-        let fc1 = (fn1 newSeq chsFunc1 a b size)
-        fc1 |> Async.RunSynchronously
-    | true ->
-        let fc1 = (fn1 newSeq chsFunc1 a b size) 
-        let fc2 = (fn2 newSeq chsFunc2 a b size)
-        fc1 |> Async.RunSynchronously
-        fc2 |> Async.RunSynchronously
+    return fu
+}
+
 ```
 
 Аппроксимация линейной функции.
